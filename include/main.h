@@ -8,3 +8,4 @@
 #include <sstream>
 #include <opencv2/opencv.hpp>
 #include <JSONProcessor.h>
+#include "evImgCover.h"
