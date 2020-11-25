@@ -1,72 +1,28 @@
-#include "main.h"
+#include "JSONProcessor.h"
 
-std::string nameInJson[501];
-int fileNumber = 0;
-std::string fileAfterFix;
-std::string originalImageLocation;
-std::string jsonFileLocation;
-std::string fileLocation;
-char originalImageCode;
-JSON_Reader JR;
-
-struct coordinate {
-    int x;
-    int y;
-    int from;
-    int to;
-};
-
-coordinate Position;
-
-std::string getFileLocation()
+std::string JSON_Processor::readfile(const char* filename)
 {
-    // std::string PrefileLocation = "./";
-    std::string modifyFileLocation = "ev";  //modify == ev
-    std::stringstream num;
-    num << fileNumber;
-    modifyFileLocation += num.str();       //modify == ev101
-    num.str("");
-    modifyFileLocation += fileAfterFix;  //modify == ev101a
-    //fileLocation =PrefileLocation + modifyFileLocation;             //fileL == ./ev101a
-    fileLocation = modifyFileLocation;
-    if (!(_access(("./" + fileLocation).c_str(), 0) == -1))
+    FILE* fp = std::fopen(filename, "rb");
+    if (!fp)
     {
-        jsonFileLocation = (modifyFileLocation + ".json");
-        return jsonFileLocation;
-    }
-    else {
+        std::cout << "Open file failed!   " << "file:" << filename << std::endl;
         return "";
     }
+
+    char* buf = new char[1024 * 1024];
+    int n = fread(buf, 1, 1024 * 1024, fp);
+    fclose(fp);
+
+    std::string res;
+    if (n >= 0)
+    {
+        res.append(buf, 0, n);
+    }
+    delete[]buf;
+    return res;
 }
 
-void imageCover(std::string signalImageLocation)
-{
-    cv::Mat srcImg = cv::imread(originalImageLocation);
-    cv::Mat signal = cv::imread(signalImageLocation);
-    cv::Mat imageROI = srcImg(cv::Rect(Position.x, Position.y, signal.cols, signal.rows));
-    cv::Mat mask = cv::imread(signalImageLocation, 0);
-    signal.copyTo(imageROI, mask);
-    std::stringstream tmp;
-    tmp << Position.from;
-
-    std::string outputImgName = tmp.str();
-    outputImgName += "_";
-    tmp.str("");
-    tmp << Position.to;
-    outputImgName += tmp.str();
-    tmp.str("");
-    outputImgName += ".png";
-    //std::cout << outputImgName << std::endl;
-    std::string preLocation = "A" + fileLocation + "_new";
-
-    if (_access(("./" + preLocation).c_str(), 0) == -1)
-        system(("mkdir " + preLocation).c_str());
-
-    cv::imwrite(preLocation + "/" + outputImgName, srcImg);//preLocation+
-    std::cout << preLocation + "/" + outputImgName << " has merged successfully" << std::endl;
-}
-
-int ParseJson(const char* jsonstr)
+int JSON_Processor::ParseJson(const char* jsonstr)
 {
     rapidjson::Document d;
     if (d.Parse(jsonstr).HasParseError())
@@ -143,40 +99,5 @@ int ParseJson(const char* jsonstr)
             }
         }
     }
-    return 0;
-}
-
-void fun()
-{
-    for (int cnt = 0; cnt <= 999; ++cnt)
-    {
-        fileNumber = cnt;
-        // fileNumber = 113;//113
-        std::string location = getFileLocation();
-        if (location == "")
-        {
-            continue;
-        }
-        std::string json = JR.readfile(location.c_str());
-        //std::cout << json << std::endl;
-        //rapidjson::Document doc;
-        ParseJson(json.c_str());
-    }
-}
-
-int main() {
-    std::ios::sync_with_stdio(false);
-    //std::string a = ".//";
-    //std::string b = "ev101_aa";
-    //std::string res = a + b;
-
-    fileAfterFix = "a";
-    fun();
-    fileAfterFix = "_a";
-    fun();
-    fileAfterFix = "_mm";
-    fun();
-    fileAfterFix = "mm";
-    fun();
     return 0;
 }
